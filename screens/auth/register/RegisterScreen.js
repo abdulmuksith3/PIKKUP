@@ -22,10 +22,10 @@ export default function LoginScreen({navigation}) {
   const keyboardVisible = useOnKeyboard();
 
   const validate = () => {
-    // if(fullname.length === 0){
-    //   showErrorMessage("Name cannot be empty")
-    //   return false;
-    // }
+    if(fullname.length === 0){
+      showErrorMessage("Name cannot be empty")
+      return false;
+    }
     if (email.length === 0 || password.length === 0) {
       showErrorMessage("Email and Password cannot be empty")
       return false;
@@ -73,8 +73,6 @@ export default function LoginScreen({navigation}) {
           value={email}
           inputStyle={styles.input}
           inputContainerStyle={styles.inputContainer}
-          // errorStyle={}
-          
         />
         <Input 
           placeholder={"*********" }
@@ -93,6 +91,20 @@ export default function LoginScreen({navigation}) {
               />
             </TouchableOpacity>                  
           }
+        />
+        <Input 
+          placeholder={'Full Name'}
+          onChangeText={(x)=> setFullname(x)}
+          value={fullname}
+          inputStyle={styles.input}
+          inputContainerStyle={styles.inputContainer}
+        />
+        <Input 
+          placeholder={'Phone'}
+          onChangeText={(x)=> setPhone(x)}
+          value={phone}
+          inputStyle={styles.input}
+          inputContainerStyle={styles.inputContainer}
         />
         {!keyboardVisible && 
           <View style={styles.buttonView}>
