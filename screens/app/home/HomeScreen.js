@@ -1,6 +1,7 @@
 import React, {useEffect} from 'react';
-import {ScrollView} from 'react-native';
+import {ScrollView, Text, View} from 'react-native';
 import {styles} from './Styles'
+import firebase from "firebase";
 
 
 export default function HomeScreen({navigation}) {
@@ -9,8 +10,11 @@ export default function HomeScreen({navigation}) {
   }, []);
 
   return (
-    <ScrollView style={styles.container}>
-    </ScrollView>
+    <View style={styles.container}>
+      <Text onPress={()=>firebase.auth().signOut()}>
+        Home Screen
+      </Text>
+    </View>
   );
 }
 
