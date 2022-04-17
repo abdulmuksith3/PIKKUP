@@ -8,7 +8,7 @@ export const showSuccessMessage = (message) => {
     // description: description,
     type: "default",
     backgroundColor: color.GREEN,
-    color: color.WHITE,
+    color: color.WHITE_PRIMARY,
     floating: true,
     icon:{
       icon:"success",
@@ -26,7 +26,7 @@ export const showErrorMessage = (message) => {
     // description: description,
     type: "default",
     backgroundColor: color.RED_PRIMARY,
-    color: color.WHITE,
+    color: color.WHITE_PRIMARY,
     floating: true,
     icon:{
       icon:"danger",

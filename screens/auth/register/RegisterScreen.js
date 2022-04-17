@@ -49,7 +49,8 @@ export default function LoginScreen({navigation}) {
           fullname: fullname,
           email: email,
           phone: phone,
-          gender: gender
+          gender: gender,
+          type: 'rider'
         });
         showSuccessMessage("Successful Sign Up");
       } catch (error) {

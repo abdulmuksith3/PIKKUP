@@ -16,11 +16,11 @@ import {
   Poppins_700Bold,
   Poppins_800ExtraBold,
 } from '@expo-google-fonts/poppins';
+import { getUser } from './common/functions/Authentication';
 LogBox.ignoreLogs([
   'Require cycle:',
 ]);
 export const UserContext = createContext();
-
 
 export default function App() {
   const [state, dispatch] = useReducer(AuthReducer, initialState)
@@ -38,13 +38,20 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    console.log("USER", user)
+    handleUser()
+  }, [user]);
+
+  const handleUser = async () => {
     if(user) {
-      dispatch({type:LOGIN, payload: user})
+      const userData = await getUser()
+      if(userData){
+        dispatch({type:LOGIN, payload: userData})
+      }
     } else {
       dispatch({type:LOGOUT})
     }
-  }, [user]);
+  }
+  
 
   if(!fontsLoaded){
     return <AppLoading />
