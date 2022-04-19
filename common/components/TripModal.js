@@ -1,82 +1,116 @@
 import React, {useState, useEffect} from 'react';
-import { StyleSheet, TouchableOpacity, View, Modal, Dimensions, Platform} from 'react-native';
-import { Camera } from 'expo-camera';
+import { StyleSheet, TouchableOpacity, View, Modal, Dimensions, Platform, Text} from 'react-native';
 import { color } from '../theme/color';
 import { Icon } from 'react-native-elements';
-import PermissionModal from './PermissionModal';
+import StepOne from './trip-modals/StepOne';
+import StepTwo from './trip-modals/StepTwo';
+import StepThree from './trip-modals/StepThree';
+import StepFour from './trip-modals/StepFour';
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
 
+const NO_OF_STATES = 4;
+
 export default function TripModal(props) {
-  const {modalVisible, setModalVisible} = props;
+  const {
+    modalVisible, setModalVisible, 
+    currentState, setCurrentState,
+    from, setFrom,
+    to, setTo,
+    seats, setSeats,
+    isSchedule, setIsSchedule,
+    carType, setCarType,
+    distance ,setDistance,
+    duration, setDuration,
+    price, setPrice,
+    selectedPayment ,setSelectedPayment,
+    promo,setPromo,
+    driver,setDriver,
+    locationChoose, setLocationChoose,
+    choosePickup, chooseDropoff
+  } = props;
 
   useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
+  
   }, []);
 
-  const handleShutterPress = async  () => {
-    try {
-      takePicture()
-    } catch (error) {
-      
+  const handleNext = () => {
+    let cs = currentState;
+    if(cs !== NO_OF_STATES){
+      setCurrentState(cs+1)
+    }
+  }
+  const handlePrevious = () => {
+    let cs = currentState;
+    if(cs === 1 ){
+      setFrom(null)
+      setTo(null)
+      setLocationChoose(false)
+      setModalVisible(false)
+    } else if(cs <= NO_OF_STATES){
+      setCurrentState(cs-1)
     }
   }
   
-
-  if (hasPermission === false || hasPermission === null) {
-    return (
-      <PermissionModal 
-        modalVisible={modalVisible}
-        setModalVisible={setModalVisible}
-      />
-    );
-  }
+  
   return (
     <Modal
       animationType="slide"
-      transparent={false}
-      visible={modalVisible}
-      onRequestClose={() => {
-      setModalVisible(false);
-    }}
+      transparent={true}
+      visible={modalVisible && !locationChoose}
     > 
       <View style={styles.container}>
         <View style={styles.containerTop}>
-          <TouchableOpacity onPress={()=> setModalVisible(false)} style={styles.backButton}>
-            <Icon
-              name={'arrow-left'}
-              size={28}
-              color={color.WHITE_PURE}
-              type={'feather'}
-            />
-          </TouchableOpacity>
+          <Text onPress={()=>setModalVisible(false)}>{currentState}</Text>
         </View>
         <View style={styles.containerBottom}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={()=> handleShutterPress()}
-          >
-            <Icon
-              name={'camera'}
-              size={30}
-              color={color.WHITE_PURE}
-              type={'feather'}
+          {currentState === 1 &&
+            <StepOne
+              handleNext={handleNext}
+              handlePrevious={handlePrevious}
+              from={from} setFrom={setFrom}
+              to={to} setTo={setTo}
+              seats={seats} setSeats={setSeats}
+              setLocationChoose={setLocationChoose}
+              locationChoose={locationChoose}
+              choosePickup={choosePickup}
+              chooseDropoff={chooseDropoff}
             />
-          </TouchableOpacity>
+          }
+          {currentState === 2 &&
+            <StepTwo
+              handleNext={handleNext}
+              handlePrevious={handlePrevious}
+              from={from} setFrom={setFrom}
+              to={to} setTo={setTo}
+              carType={carType} setCarType={setCarType}
+              distance={distance} setDistance={setDistance}
+              duration={duration} setDuration={setDuration}
+              price={price} setPrice={setPrice}
+            />
+          }
+          {currentState === 3 &&
+            <StepThree
+              handleNext={handleNext}
+              handlePrevious={handlePrevious}
+              selectedPayment={selectedPayment} setSelectedPayment={setSelectedPayment}
+              promo={promo} setPromo={setPromo}
+            />
+          }
+          {currentState === 4 &&
+            <StepFour
+              handleNext={handleNext}
+              handlePrevious={handlePrevious}
+              driver={driver}
+              distance={distance} setDistance={setDistance}
+              duration={duration} setDuration={setDuration}
+              price={price} setPrice={setPrice}
+              from={from} setFrom={setFrom}
+              to={to} setTo={setTo}
+            />
+          }
         </View>
-        <Camera 
-          ref={cameraRef} 
-          style={styles.camera} 
-          type={type} 
-          autoFocus={true}
-          // ratio={'1:1'}
-          // pictureSize={"352x288"}
-          // pictureSize={"Low"}
-        />
       </View>
     </Modal>
   );
@@ -84,47 +118,18 @@ export default function TripModal(props) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-  camera: {
-    // flex: 1,
-    height: HEIGHT
-  },
-  button: {
-    alignItems: 'center',
-    justifyContent:"center",
-    backgroundColor: color.BLUE_PRIMARY,
-    width: 80,
-    height: 80,
-    borderRadius: 1000
-  },
-  text: {
-    fontSize: 18,
-    color: 'white',
+    height:HEIGHT/1.2,
+    width:WIDTH,
+    backgroundColor:color.BLUE_PRIMARY,
+    bottom:0,
+    position:"absolute",
   },
   containerTop:{
-    backgroundColor: color.BLACK_TRANSPARENT,
-    position:"absolute",
-    top: 0,
-    height: 100,
-    width: WIDTH,
-    zIndex:1,
-    justifyContent:"center",
-    alignItems:"flex-start",
-    paddingTop : Platform.OS === 'ios' ? '6%' : 0
+    flex:1,
+    backgroundColor:"red"
   },
   containerBottom:{
-    backgroundColor: color.BLACK_TRANSPARENT,
-    position:"absolute",
-    bottom: 0,
-    height: 130,
-    width: WIDTH,
-    zIndex:1,
-    justifyContent:"center",
-    alignItems:"center"
-  },
-  backButton:{
-    // backgroundColor:"red",
-    marginLeft: 20
+    flex:5,
+    backgroundColor:"green"
   }
 });

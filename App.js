@@ -65,7 +65,7 @@ export default function App() {
             :
             <AuthContainer/>
           }
-          <FlashMessage position="bottom" />
+          <FlashMessage position="top" />
         </UserContext.Provider>
     );
     // }

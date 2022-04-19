@@ -33,8 +33,8 @@ export const styles = StyleSheet.create({
     color:color.BLACK_PRIMARY,
   },
   userImg:{
-    height:65,
-    width:65,
+    height:60,
+    width:60,
     borderRadius: 1000,
     backgroundColor: color.BLUE_PRIMARY,
   }
