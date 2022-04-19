@@ -1,7 +1,6 @@
 import React, {useEffect, useState, useContext} from 'react';
-import {ScrollView, Text, View, Image} from 'react-native';
+import {ScrollView, Text, View, Image, TouchableOpacity} from 'react-native';
 import {styles} from './Styles'
-import firebase from "firebase";
 import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps"
 import { mapStyle } from '../../../common/theme/map';
 import * as Location from 'expo-location';
@@ -20,6 +19,7 @@ export default function HomeScreen({navigation}) {
   const {user} = state;
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
+  
 
   useEffect(() => {
     (async () => {
@@ -38,8 +38,8 @@ export default function HomeScreen({navigation}) {
     <View style={styles.container}>
       <MapView
         provider={PROVIDER_GOOGLE}
-        showsUserLocation={true}
-        showsMyLocationButton={true}
+        // showsUserLocation={true}
+        // showsMyLocationButton={true}
         loadingEnabled
         style={{height:"100%", width:"100%"}}
         initialRegion={QATAR_REGION}
@@ -56,7 +56,9 @@ export default function HomeScreen({navigation}) {
           <Text>Saved Locations</Text>
         </View>
         <View>
-          <Text>Search Bar</Text>
+          <TouchableOpacity style={styles.searchButton} onPress={()=>console.log("YOYO")}>
+            <Text style={styles.searchText}>Where are you going?</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
