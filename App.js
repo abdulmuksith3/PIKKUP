@@ -8,6 +8,7 @@ import { AuthReducer, initialState, LOGIN, LOGOUT} from './common/reducers/AuthR
 import { MenuProvider } from 'react-native-popup-menu';
 import firebase from "firebase";
 import "firebase/auth";
+import db from './db';
 import {
   useFonts,
   Poppins_200ExtraLight,
@@ -16,7 +17,6 @@ import {
   Poppins_700Bold,
   Poppins_800ExtraBold,
 } from '@expo-google-fonts/poppins';
-import { getUser } from './common/functions/Authentication';
 LogBox.ignoreLogs([
   'Require cycle:',
 ]);
@@ -43,15 +43,15 @@ export default function App() {
 
   const handleUser = async () => {
     if(user) {
-      const userData = await getUser()
-      if(userData){
-        dispatch({type:LOGIN, payload: userData})
-      }
+      db.ref(`users/${firebase.auth().currentUser.uid}`).on('value', (snapshot) => {
+        if(snapshot.val()){
+          dispatch({type:LOGIN, payload: snapshot.val()})
+        }
+      })
     } else {
       dispatch({type:LOGOUT})
     }
   }
-  
 
   if(!fontsLoaded){
     return <AppLoading />

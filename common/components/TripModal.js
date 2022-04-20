@@ -6,6 +6,7 @@ import StepOne from './trip-modals/StepOne';
 import StepTwo from './trip-modals/StepTwo';
 import StepThree from './trip-modals/StepThree';
 import StepFour from './trip-modals/StepFour';
+import { AddBookingRequest } from '../functions/Booking';
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
@@ -28,31 +29,46 @@ export default function TripModal(props) {
     promo,setPromo,
     driver,setDriver,
     locationChoose, setLocationChoose,
-    choosePickup, chooseDropoff
+    choosePickup, chooseDropoff,
+    setCoords, userLocation
   } = props;
-
-  useEffect(() => {
-  
-  }, []);
 
   const handleNext = () => {
     let cs = currentState;
     if(cs !== NO_OF_STATES){
       setCurrentState(cs+1)
     }
+    if((cs) === 3){
+      handleConfirm()
+    }
   }
+
   const handlePrevious = () => {
     let cs = currentState;
     if(cs === 1 ){
-      setFrom(null)
+      setFrom(userLocation)
       setTo(null)
       setLocationChoose(false)
+      setCoords(null)
       setModalVisible(false)
     } else if(cs <= NO_OF_STATES){
       setCurrentState(cs-1)
     }
-  }
+  }  
   
+  const handleConfirm = () => {
+    AddBookingRequest({
+      carType: carType,
+      seats: seats,
+      pickup:from,
+      dropoff: to,
+      initialPrice:10,
+      finalPrice: 10,
+      paid: false,
+      paymentMethod: selectedPayment,
+      status : "NEW"
+    })
+  }
   
   return (
     <Modal

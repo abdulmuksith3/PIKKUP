@@ -4,9 +4,6 @@ import { color } from '../../theme/color';
 import { Icon } from 'react-native-elements';
 import { showErrorMessage } from '../../functions/FlashMessage';
 
-const WIDTH = Dimensions.get('window').width;
-const HEIGHT = Dimensions.get('window').height;
-
 export default function StepOne(props) {
   const {
     from, setFrom,
@@ -20,10 +17,8 @@ export default function StepOne(props) {
   } = props;
 
   const validate = () => {
-    console.log("FROM TO", from, to)
-    handleNext()
     if(from && to){
-      // handleNext()
+      handleNext()
     } else {
       showErrorMessage("Please Choose Pick-Up/Drop-Off Location")
     }

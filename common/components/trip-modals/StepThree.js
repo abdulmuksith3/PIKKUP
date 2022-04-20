@@ -23,13 +23,13 @@ export default function StepThree(props) {
   return (
     <View style={styles.container}>
       <View>
-        <TouchableOpacity onPress={()=>setSelectedPayment(0)}>
-          <Text>1</Text>
+        <TouchableOpacity onPress={()=>setSelectedPayment("COD")}>
+          <Text>COD</Text>
         </TouchableOpacity>
-        <TouchableOpacity  onPress={()=>setSelectedPayment(2)}>
+        <TouchableOpacity  onPress={()=>setSelectedPayment("CARD")}>
           <Text>2</Text>
         </TouchableOpacity>
-        <TouchableOpacity  onPress={()=>setSelectedPayment(3)}>
+        <TouchableOpacity  onPress={()=>setSelectedPayment("2")}>
           <Text>3</Text>
         </TouchableOpacity>
       </View>

@@ -1,12 +1,21 @@
-import React, {useEffect, useState, useContext} from 'react';
-import {ScrollView, Text, View, Image, TouchableOpacity} from 'react-native';
+import React, {useEffect, useState, useContext, useRef} from 'react';
+import {ScrollView, Text, View, Image, TouchableOpacity, Dimensions} from 'react-native';
 import {styles} from './Styles'
-import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps"
+import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from "react-native-maps"
 import { mapStyle } from '../../../common/theme/map';
 import * as Location from 'expo-location';
 import Avatar from '../../../assets/images/avatar.png'
 import { UserContext } from '../../../App';
 import TripModal from '../../../common/components/TripModal';
+import { getRoute } from '../../../common/functions/TomTom';
+import { color } from '../../../common/theme/color';
+import { getActiveBooking, getDrivers } from '../../../common/functions/Booking';
+import {logout, updateLocation} from '../../../common/functions/Authentication'
+
+const { width, height } = Dimensions.get('window');
+const ASPECT_RATIO = width / height;
+const LATITUDE_DELTA = 0.0922;
+const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
 const QATAR_REGION = {
   latitude: 25.103681027191968,
@@ -15,10 +24,10 @@ const QATAR_REGION = {
   longitudeDelta: 1.3360247388482094,
 }
 
-
 export default function HomeScreen({navigation}) {
   const {state, dispatch} = useContext(UserContext);
   const {user} = state;
+  const mapRef = useRef();
   const [location, setLocation] = useState(null);
   const [regionLocation, setRegionLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null)
@@ -43,7 +52,9 @@ export default function HomeScreen({navigation}) {
 
   const [driver, setDriver] = useState(null);
 
-  const [bookingStatus, setBookingStatus] = useState(null);
+  const [currentBooking, setCurrentBooking] = useState(null);
+  const [status, setStatus] = useState(null);
+  const [coords, setCoords] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -52,17 +63,85 @@ export default function HomeScreen({navigation}) {
         setErrorMsg('Permission to access location was denied');
         return;
       }
-      let location = await Location.getCurrentPositionAsync({});
-      setLocation(location);
+      await Location.watchPositionAsync({}, async (location) => {
+        setLocation(location);
+        updateLocation(location)
+      });
     })();
   }, []);
 
   // useEffect(() => {
-  //   if(location && !from){
-  //     const {latitude, longitude} = location.coords;
-  //     setFrom({latitude, longitude})
+  //   if(errorMsg){
+  //     console.log("LOCATION ERROR")
   //   }
-  // }, [location]);
+  // }, [errorMsg]);
+  
+  useEffect(() => {
+    if(user.activeBooking){
+      handleActiveBooking()
+    } else {
+      setCurrentBooking(null)
+    }
+  }, [user.activeBooking]);
+
+  useEffect(() => {
+    if(location){
+      animateToUserLoc(location)
+    }
+    if(location && !from){
+      setFrom({latitude : location.coords.latitude , longitude : location.coords.longitude})
+    }
+
+  }, [location]);
+
+  useEffect(() => {
+    if(currentBooking){
+      let {
+        carType, 
+        pickup, 
+        dropoff, 
+        initialPrice, 
+        finalPrice,
+        paymentMethod,
+        seats,
+        status,
+        discount
+      } = currentBooking;
+
+      setCarType(carType)
+      setFrom(pickup)
+      setTo(dropoff)
+      setPrice(finalPrice)
+      setSelectedPayment(paymentMethod)
+      setSeats(seats)
+      setPromo(discount)
+      setCurrentState(4)
+      setModalVisible(true)
+    } else {
+      setCarType(null)
+      setFrom(null)
+      setTo(null)
+      setPrice(null)
+      setSelectedPayment(null)
+      setSeats(null)
+      setPromo(null)
+      setCurrentState(1)
+      setModalVisible(false)
+    }
+  }, [currentBooking]);
+
+  useEffect(() => {
+    if(from && to){
+      handleRoute(from, to)
+    } else {
+      setCoords(null)
+    }
+  }, [from , to]);
+
+  const handleActiveBooking = async () => {
+    const booking = await getActiveBooking()
+    setCurrentBooking(booking)
+  }
 
   const choosePickup = () => {
     setDropoff(false)
@@ -76,7 +155,7 @@ export default function HomeScreen({navigation}) {
   }
 
   const handleLocationPick = () => {
-    let tempLoc = location;
+    let tempLoc = location.coords;
     if(regionLocation){
       tempLoc = regionLocation
     }
@@ -85,59 +164,85 @@ export default function HomeScreen({navigation}) {
       chooseDropoff()
     }
     if(dropoff){
-      setTo({ latitude : tempLoc.latitude , longitude : tempLoc.longitude })
+      let to = { latitude : tempLoc.latitude , longitude : tempLoc.longitude }
+      setTo(to)
       setDropoff(false)
     }
-    if(from) {
-      console.log("FROMTO ", from)
+    if(from && to){
       setLocationChoose(false)
     }
-    // console.log({from, to})
   }
+
+  const animateToUserLoc = (location) => {
+    let loc = {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+      latitudeDelta: LATITUDE_DELTA,
+      longitudeDelta: LONGITUDE_DELTA
+    }
+    mapRef.current.animateToRegion(loc, 1 * 1000);
+  };
   
+  const handleRoute = async (from, to) => {
+    const {route, distance, duration} = await getRoute(from, to);
+    setCoords(route)
+    setDistance(distance)
+    setDuration(duration)
+  }
+
+  useEffect(() => {
+    getDrivers()
+  }, []);
+
+
 
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef}
         provider={PROVIDER_GOOGLE}
-        // showsUserLocation={true}
-        // showsMyLocationButton={true}
+        showsUserLocation={true}
         loadingEnabled
         style={{height:"100%", width:"100%"}}
         initialRegion={QATAR_REGION}
-        onRegionChange={locationChoose ? setRegionLocation : ()=>console.log("CHANGE")}
-        // followsUserLocation
-        // onPanDrag={onPanDrag}
+        onRegionChange={locationChoose ? setRegionLocation : null}
         customMapStyle={mapStyle}
-        
       >
-        {location && 
+        {coords &&
+          <Polyline
+            coordinates={coords}
+            strokeColor={color.BLUE_PRIMARY} 
+            strokeWidth={4}
+          />
+        }
+        {/* {location && 
           <Marker
             coordinate={location.coords}
             title={"You"}
             description={"Your current location"}
           />
-        }
-        {locationChoose && regionLocation && (!pickup || !dropoff) &&
+        } */}
+        {locationChoose && regionLocation && (!from || !to) &&
           <Marker
             coordinate={regionLocation}
           />
         }
-        { from &&
+        {from &&
           <Marker
-          coordinate={from}
-        />
+            coordinate={from}
+          />
         }
-        { to &&
+        {to &&
           <Marker
-          coordinate={to}
-        />
+            coordinate={to}
+          />
         }
+        
       </MapView>
       {!modalVisible && 
       <>
         <View style={styles.top}>
-          <Text style={styles.greetingText}>Hello, {user?.fullname }</Text>
+          <Text onPress={()=> logout()} style={styles.greetingText}>Hello, {user?.fullname }</Text>
           <Image source={Avatar} style={styles.userImg} />
         </View>
       
@@ -181,8 +286,11 @@ export default function HomeScreen({navigation}) {
         driver={driver} setDriver={setDriver}
         locationChoose={locationChoose} setLocationChoose={setLocationChoose}
         chooseDropoff={chooseDropoff} choosePickup={choosePickup}
+        setCoords={setCoords} userLocation={location?.coords}
       />
     </View>
   );
 }
+
+
 

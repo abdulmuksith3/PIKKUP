@@ -3,6 +3,7 @@ import { StyleSheet, TouchableOpacity, View, Modal, Dimensions, Platform, Text} 
 import { color } from '../../theme/color';
 import { Icon } from 'react-native-elements';
 import { showErrorMessage } from '../../functions/FlashMessage';
+import { cancelBooking } from '../../functions/Booking';
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
@@ -21,7 +22,7 @@ export default function StepFour(props) {
   } = props;
 
   const validate = () => {
-    handleNext()
+    cancelBooking()
   }
 
   return (
@@ -46,7 +47,7 @@ export default function StepFour(props) {
         <Text>Map</Text>
       </View>
       <View>
-        <TouchableOpacity onPress={()=>handlePrevious()}>
+        <TouchableOpacity onPress={()=>validate()}>
           <Text>Cancel Booking</Text>
         </TouchableOpacity>
       </View>
