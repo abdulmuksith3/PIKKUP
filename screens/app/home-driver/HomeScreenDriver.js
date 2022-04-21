@@ -14,6 +14,7 @@ import {logout, updateLocation} from '../../../common/functions/Authentication'
 import { logMessage } from '../../../common/functions/Log';
 import db from '../../../db';
 import firebase from 'firebase';
+import { ACCEPTED, ARRIVED, CANCELLED, NEW } from '../../../common/constants/BookingStatus';
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 const LATITUDE_DELTA = 0.0922;
@@ -57,6 +58,7 @@ export default function HomeScreenDriver({navigation}) {
   const [currentBooking, setCurrentBooking] = useState(null);
   const [requests, setRequests] = useState(null);
   const [status, setStatus] = useState(null);
+  const [currentDestination, setCurrentDestination] = useState(null);
   const [coords, setCoords] = useState(null);
 
   useEffect(() => {
@@ -167,9 +169,17 @@ export default function HomeScreenDriver({navigation}) {
     mapRef.current.animateToRegion(loc, 1 * 1000);
   };
   
-  useEffect(() => {
-      console.log("CUREE ", currentBooking)
-  }, [currentBooking]);
+  // useEffect(() => {
+  //   if(currentBooking?.status){
+  //     const bookingStatus = currentBooking.status;
+  //     if(bookingStatus === ACCEPTED){
+  //       setCurrentDestination(currentBooking.pickup)
+  //     }
+  //     else if(bookingStatus === ARRIVED){
+  //       setCurrentDestination(currentBooking.dropoff)
+  //     }
+  //   } 
+  // }, [currentBooking]);
 
 
 
@@ -209,7 +219,7 @@ export default function HomeScreenDriver({navigation}) {
         }
       </MapView>
         
-      {requests && (!currentBooking || currentBooking?.status === "NEW") &&
+      {requests && (!currentBooking || currentBooking?.status === NEW) &&
         <View style={styles.bottom}>
             <TouchableOpacity style={styles.searchButton} onPress={()=> acceptRequest(requests[0])}>
               <Text style={styles.searchText}> 

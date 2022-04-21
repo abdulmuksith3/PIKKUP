@@ -18,3 +18,21 @@ export const updateLocation = (location) => {
 export const logout = () => {
   firebase.auth().signOut()
 }
+
+export const getUser = async (id) => {
+  try {
+    const snapshot = await db.ref(`users/${id}`).once('value')
+    if(snapshot.val()){
+      return snapshot.val()
+    } else{
+      return null;
+    }
+  } 
+  catch (error) {
+    logMessage({
+        title: 'getUser Error',
+        body: error.message,
+    })
+    return null;
+}
+}

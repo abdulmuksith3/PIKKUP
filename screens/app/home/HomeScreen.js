@@ -13,6 +13,8 @@ import {logout, updateLocation} from '../../../common/functions/Authentication'
 import { logMessage } from '../../../common/functions/Log';
 import db from '../../../db';
 import firebase from 'firebase';
+import { getUser } from '../../../common/functions/Authentication';
+
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 const LATITUDE_DELTA = 0.0922;
@@ -52,6 +54,7 @@ export default function HomeScreen({navigation}) {
   const [promo, setPromo] = useState(null);
 
   const [driver, setDriver] = useState(null);
+  const [driverDetails, setDriverDetails] = useState(null);
 
   const [currentBooking, setCurrentBooking] = useState(null);
   const [status, setStatus] = useState(null);
@@ -222,8 +225,17 @@ export default function HomeScreen({navigation}) {
   }
 
   useEffect(() => {
-    
-  }, []);
+    handleDriver()
+  }, [driver]);
+
+  const handleDriver = async () => {
+    if(driver){
+      const res = await getUser(driver)
+      setDriverDetails(res)
+    } else {
+      setDriverDetails(null)
+    }
+  }
 
 
 
@@ -314,7 +326,7 @@ export default function HomeScreen({navigation}) {
         price={price} setPrice={setPrice}
         selectedPayment={selectedPayment} setSelectedPayment={setSelectedPayment}
         promo={promo} setPromo={setPromo}
-        driver={driver} setDriver={setDriver}
+        driver={driverDetails} setDriver={setDriver}
         locationChoose={locationChoose} setLocationChoose={setLocationChoose}
         chooseDropoff={chooseDropoff} choosePickup={choosePickup}
         setCoords={setCoords} userLocation={location?.coords}

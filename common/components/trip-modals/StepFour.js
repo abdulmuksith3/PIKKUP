@@ -5,6 +5,7 @@ import { Icon } from 'react-native-elements';
 import { showErrorMessage } from '../../functions/FlashMessage';
 import { cancelBooking } from '../../functions/Booking';
 import { UserContext } from '../../../App';
+import { getUser } from '../../functions/Authentication';
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
@@ -19,12 +20,15 @@ export default function StepFour(props) {
     distance ,setDistance,
     duration, setDuration,
     price, setPrice,
-    driver,setDriver,
+    driver,
   } = props;
 
   const validate = () => {
     cancelBooking()
   }
+
+
+  
 
   return (
     <View style={styles.container}>

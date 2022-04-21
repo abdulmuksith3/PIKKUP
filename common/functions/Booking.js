@@ -3,14 +3,7 @@ import "firebase/auth";
 import db from "../../db";
 import { logMessage } from "./Log";
 import { getDistance } from "geolib";
-
-const NEW = "NEW";
-const ACCEPTED = "ACCEPTED";
-const ARRIVED = "ARRIVED";
-const COMPLETED = "COMPLETED";
-const PAID = "PAID";
-const CANCELLED = "CANCELLED";
-
+import { NEW, ACCEPTED, CANCELLED, ONGOING } from "../constants/BookingStatus";
 
 export const AddBookingRequest = async (data) => {
     try {
@@ -81,12 +74,12 @@ export const cancelBooking = async () => {
     try {
         const snapshot = await db.ref(`users/${firebase.auth().currentUser.uid}/activeBooking`).once('value')
         if(snapshot.val()){
-            const {id, status, driverId} = snapshot.val()
+            const {bookingId, requestId, status, driverId} = snapshot.val()
             if(status === NEW){
-                await removeDriverRequest(id)
+                await removeDriverRequest(requestId)
             } else {
                 db.ref(`users/${driverId}/activeBooking`).remove()
-                db.ref(`bookings/${id}`).update({status:CANCELLED})
+                db.ref(`bookings/${bookingId}`).update({status:CANCELLED})
             }
             db.ref(`users/${firebase.auth().currentUser.uid}/activeBooking`).remove()
         return null;
@@ -121,28 +114,32 @@ export const acceptRequest = async (request) => {
     // return;
     const driverId = firebase.auth().currentUser.uid;
     try {
+        const myRef = db.ref().push();
+        const key = myRef.getKey();
         db.ref(`users/${driverId}/activeBooking`).update({
-            id: id,
+            bookingId: key,
+            requestId: id,
             status: ACCEPTED,
             riderId: riderId,
             driverId: driverId
         });
         db.ref(`users/${riderId}/activeBooking`).update({
-            id: id,
+            bookingId: key,
+            requestId: id,
             status: ACCEPTED,
             riderId: riderId,
             driverId: driverId
         });
-        db.ref(`users/${riderId}/bookingHistory/${id}`).set({id, riderId, driverId});
-        db.ref(`users/${driverId}/bookingHistory/${id}`).set({id, riderId, driverId});
+        db.ref(`users/${riderId}/bookingHistory/${key}`).set({id:key, riderId, driverId});
+        db.ref(`users/${driverId}/bookingHistory/${key}`).set({id:key, riderId, driverId});
         await db.ref(`bookingRequest/${id}`).once('value', async (snapshot) => {
             let data = snapshot.val()
-            data.drivers = null;
             data.status = ACCEPTED;
-            db.ref(`bookings/${id}`).set({
-                ...data,
-                driverId: driverId
+            db.ref(`bookings/${key}`).set({
+                driverId,
+                status: ONGOING,
             });
+            db.ref(`bookings/${key}/bookingRequest/${id}`).set(data);
             await removeDriverRequest(id)
         })
     } catch (error) {
