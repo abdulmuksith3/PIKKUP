@@ -1,9 +1,10 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import { StyleSheet, TouchableOpacity, View, Modal, Dimensions, Platform, Text} from 'react-native';
 import { color } from '../../theme/color';
 import { Icon } from 'react-native-elements';
 import { showErrorMessage } from '../../functions/FlashMessage';
 import { cancelBooking } from '../../functions/Booking';
+import { UserContext } from '../../../App';
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
@@ -29,7 +30,7 @@ export default function StepFour(props) {
     <View style={styles.container}>
       <View>
         <View>
-          <Text>Driver</Text>
+          <Text>Driver {driver && "FOUND"}</Text>
         </View>
       </View>
       <View>

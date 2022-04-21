@@ -9,6 +9,7 @@ import { UserContext } from '../../../App';
 import TripModal from '../../../common/components/TripModal';
 import { getRoute } from '../../../common/functions/TomTom';
 import { color } from '../../../common/theme/color';
+import { acceptRequest, getActiveBooking, getRequests } from '../../../common/functions/Booking';
 import {logout, updateLocation} from '../../../common/functions/Authentication'
 import { logMessage } from '../../../common/functions/Log';
 import db from '../../../db';
@@ -25,7 +26,7 @@ const QATAR_REGION = {
   longitudeDelta: 1.3360247388482094,
 }
 
-export default function HomeScreen({navigation}) {
+export default function HomeScreenDriver({navigation}) {
   const {state, dispatch} = useContext(UserContext);
   const {user} = state;
   const mapRef = useRef();
@@ -54,6 +55,7 @@ export default function HomeScreen({navigation}) {
   const [driver, setDriver] = useState(null);
 
   const [currentBooking, setCurrentBooking] = useState(null);
+  const [requests, setRequests] = useState(null);
   const [status, setStatus] = useState(null);
   const [coords, setCoords] = useState(null);
 
@@ -75,8 +77,22 @@ export default function HomeScreen({navigation}) {
   //   if(errorMsg){
   //     console.log("LOCATION ERROR")
   //   }
-  // }, [errorMsg]);
+  // }, [errorMsg]);\
+  useEffect(() => {
+    if(location){
+      animateToUserLoc(location)
+    }
+  }, [location]);
   
+  useEffect(() => {
+    if(user.requests){
+      handleRequests()
+    } else {
+      setRequests(null)
+    }
+  }, [user.requests]);
+
+
   useEffect(() => {
     if(user.activeBooking){
       handleActiveBooking()
@@ -85,64 +101,31 @@ export default function HomeScreen({navigation}) {
     }
   }, [user.activeBooking]);
 
-  useEffect(() => {
-    if(location){
-      animateToUserLoc(location)
+  const handleRequests = () => {
+    try {
+      db.ref(`users/${firebase.auth().currentUser.uid}/requests`).on('value', (snapshot) => {
+        if(snapshot.val()){
+          let requests = []
+          snapshot.forEach(async (childSnapshot) => {  
+            const req = childSnapshot.val()
+            await db.ref(`users/${req.riderId}`).once('value', (rider) => { 
+              requests.push({...req, rider: rider})
+            })
+            if(requests.length > 0){
+              setRequests(requests)
+            }
+          })
+        }
+      })
+    } catch (error) {
+        logMessage({
+            title: 'getActiveBooking Error',
+            body: error.message,
+        })     
     }
-    if(location && !from){
-      setFrom({latitude : location.coords.latitude , longitude : location.coords.longitude})
-    }
+  }
 
-  }, [location]);
-
-  useEffect(() => {
-    if(currentBooking){
-      let {
-        carType, 
-        pickup, 
-        dropoff, 
-        initialPrice, 
-        finalPrice,
-        paymentMethod,
-        seats,
-        status,
-        discount,
-        driverId
-      } = currentBooking;
-
-      setCarType(carType)
-      setFrom(pickup)
-      setTo(dropoff)
-      setPrice(finalPrice)
-      setSelectedPayment(paymentMethod)
-      setSeats(seats)
-      setPromo(discount)
-      setCurrentState(4)
-      setDriver(driverId)
-      setModalVisible(true)
-    } else {
-      setCarType(null)
-      setFrom(location?.coords)
-      setTo(null)
-      setPrice(null)
-      setSelectedPayment(null)
-      setSeats(null)
-      setPromo(null)
-      setCurrentState(1)
-      setDriver(null)
-      setModalVisible(false)
-    }
-  }, [currentBooking]);
-
-  useEffect(() => {
-    if(from && to){
-      handleRoute(from, to)
-    } else {
-      setCoords(null)
-    }
-  }, [from , to]);
-
-  const handleActiveBooking = () => {
+  const handleActiveBooking = async () => {
     try {
       db.ref(`users/${firebase.auth().currentUser.uid}/activeBooking`).on('value', async (snapshot)=>{
         if(snapshot.val()){
@@ -174,36 +157,6 @@ export default function HomeScreen({navigation}) {
     }
   }
 
-  const choosePickup = () => {
-    setDropoff(false)
-    setPickup(true)
-    setLocationChoose(true)
-  }
-  const chooseDropoff = () => {
-    setPickup(false)
-    setDropoff(true)
-    setLocationChoose(true)
-  }
-
-  const handleLocationPick = () => {
-    let tempLoc = location.coords;
-    if(regionLocation){
-      tempLoc = regionLocation
-    }
-    if(pickup){
-      setFrom({ latitude : tempLoc.latitude , longitude : tempLoc.longitude })
-      chooseDropoff()
-    }
-    if(dropoff){
-      let to = { latitude : tempLoc.latitude , longitude : tempLoc.longitude }
-      setTo(to)
-      setDropoff(false)
-    }
-    if(from && to){
-      setLocationChoose(false)
-    }
-  }
-
   const animateToUserLoc = (location) => {
     let loc = {
       latitude: location.coords.latitude,
@@ -214,16 +167,9 @@ export default function HomeScreen({navigation}) {
     mapRef.current.animateToRegion(loc, 1 * 1000);
   };
   
-  const handleRoute = async (from, to) => {
-    const {route, distance, duration} = await getRoute(from, to);
-    setCoords(route)
-    setDistance(distance)
-    setDuration(duration)
-  }
-
   useEffect(() => {
-    
-  }, []);
+      console.log("CUREE ", currentBooking)
+  }, [currentBooking]);
 
 
 
@@ -232,11 +178,11 @@ export default function HomeScreen({navigation}) {
       <MapView
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
-        showsUserLocation={true}
+        // showsUserLocation={true}
         loadingEnabled
         style={{height:"100%", width:"100%"}}
         initialRegion={QATAR_REGION}
-        onRegionChange={locationChoose ? setRegionLocation : null}
+        // onRegionChange={setRegionLocation}
         customMapStyle={mapStyle}
       >
         {coords &&
@@ -246,79 +192,32 @@ export default function HomeScreen({navigation}) {
             strokeWidth={4}
           />
         }
-        {/* {location && 
+        {location && 
           <Marker
             coordinate={location.coords}
             title={"You"}
             description={"Your current location"}
-          />
-        } */}
-        {locationChoose && regionLocation && (!from || !to) &&
-          <Marker
-            coordinate={regionLocation}
-          />
-        }
-        {from &&
-          <Marker
-            coordinate={from}
+            pinColor={color.BLUE_PRIMARY}
           />
         }
         {to &&
           <Marker
             coordinate={to}
+            title={"Destination"}
+            pinColor={color.BLUE_PRIMARY}
           />
         }
-        
       </MapView>
-      {!modalVisible && 
-      <>
-        <View style={styles.top}>
-          <Text onPress={()=> logout()} style={styles.greetingText}>Hello, {user?.fullname }</Text>
-          <Image source={Avatar} style={styles.userImg} />
-        </View>
-      
+        
+      {requests && (!currentBooking || currentBooking?.status === "NEW") &&
         <View style={styles.bottom}>
-          <View>
-            <Text>Saved Locations</Text>
-          </View>
-          <View>
-            <TouchableOpacity style={styles.searchButton} onPress={()=>setModalVisible(true)}>
-              <Text style={styles.searchText}>Where are you going?</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </>
-      }
-      {locationChoose &&
-        <View style={styles.bottom}>
-          <TouchableOpacity style={styles.searchButton} onPress={()=> handleLocationPick()}>
-            <Text style={styles.searchText}> 
-              {
-              pickup ? "Confirm Pick Up" : 
-              dropoff ? "Confirm Drop-Off" : "Continue"
-              }
+            <TouchableOpacity style={styles.searchButton} onPress={()=> acceptRequest(requests[0])}>
+              <Text style={styles.searchText}> 
+                Accept Request   {user?.fullname }
               </Text>
-          </TouchableOpacity>
-      </View>
+            </TouchableOpacity>
+        </View>
       }
-      <TripModal 
-        modalVisible={modalVisible} setModalVisible={setModalVisible}  
-        currentState={currentState} setCurrentState={setCurrentState}
-        from={from} setFrom={setFrom}
-        to={to} setTo={setTo}
-        seats={seats} setSeats={setSeats}
-        isSchedule={isSchedule} setIsSchedule={setIsSchedule}
-        carType={carType} setCarType={setCarType}
-        distance={distance} setDistance={setDistance}
-        duration={duration} setDuration={setDuration}
-        price={price} setPrice={setPrice}
-        selectedPayment={selectedPayment} setSelectedPayment={setSelectedPayment}
-        promo={promo} setPromo={setPromo}
-        driver={driver} setDriver={setDriver}
-        locationChoose={locationChoose} setLocationChoose={setLocationChoose}
-        chooseDropoff={chooseDropoff} choosePickup={choosePickup}
-        setCoords={setCoords} userLocation={location?.coords}
-      />
     </View>
   );
 }

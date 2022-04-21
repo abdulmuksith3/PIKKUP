@@ -50,7 +50,7 @@ export default function LoginScreen({navigation}) {
           email: email,
           phone: phone,
           gender: gender,
-          type: 'rider'
+          type: 'Rider'
         });
         showSuccessMessage("Successful Sign Up");
       } catch (error) {

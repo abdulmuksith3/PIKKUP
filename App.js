@@ -60,7 +60,7 @@ export default function App() {
         <UserContext.Provider value={{state, dispatch}} >
           {state.user ?
             <MenuProvider>
-              <AppContainer />
+              <AppContainer userType={state.user.type}/>
             </MenuProvider>
             :
             <AuthContainer/>
