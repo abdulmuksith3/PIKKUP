@@ -3,7 +3,7 @@ import "firebase/auth";
 import db from "../../db";
 import { logMessage } from "./Log";
 import { getDistance } from "geolib";
-import { NEW, ACCEPTED, CANCELLED, ONGOING } from "../constants/BookingStatus";
+import { NEW, ACCEPTED, CANCELLED, ONGOING, COMPLETED } from "../constants/BookingStatus";
 
 export const AddBookingRequest = async (data) => {
     try {
@@ -136,6 +136,7 @@ export const acceptRequest = async (request) => {
             let data = snapshot.val()
             data.status = ACCEPTED;
             db.ref(`bookings/${key}`).set({
+                id: key,
                 driverId,
                 status: ONGOING,
             });
@@ -149,7 +150,52 @@ export const acceptRequest = async (request) => {
         })     
     }
 }
+export const updateRequest = async (request) => {
+    const {requestId, bookingId, data} = request;
+    try {
+        db.ref(`bookings/${bookingId}/bookingRequest/${requestId}`).update(data);
+    } catch (error) {
+        logMessage({
+            title: 'updateRequest Error',
+            body: error.message,
+        })     
+    }
+}
 
-export const confirmBooking = () => {
-    
+export const finishRequest = (request) => {
+    const {requestId, bookingId, data, riderId} = request;
+    try {
+        db.ref(`bookings/${bookingId}/bookingRequest/${requestId}`).update(data);
+        db.ref(`users/${riderId}/activeBooking`).remove();
+    } catch (error) {
+        logMessage({
+            title: 'finishRequest Error',
+            body: error.message,
+        })     
+    }
+}
+
+export const finishBooking = (request) => {
+    const {requestId, bookingId, data} = request;
+    try {
+        db.ref(`bookings/${bookingId}`).update({
+            status: COMPLETED
+        });
+        db.ref(`users/${firebase.auth().currentUser.uid}/activeBooking`).remove();
+        let data = db.ref(`bookings/${bookingId}`).once('value')
+        if(snapshot.val()){
+            const requests = Object.keys(data).map((i) => {
+                data[i].id = i
+                return data[i]
+            })
+            requests.forEach(request => {
+                db.ref(`users/${request.riderId}/activeBooking`).remove()
+            });
+        }
+    } catch (error) {
+        logMessage({
+            title: 'finishBooking Error',
+            body: error.message,
+        })     
+    }
 } 

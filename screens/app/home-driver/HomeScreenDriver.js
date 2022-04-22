@@ -7,14 +7,14 @@ import * as Location from 'expo-location';
 import Avatar from '../../../assets/images/avatar.png'
 import { UserContext } from '../../../App';
 import TripModal from '../../../common/components/TripModal';
-import { getRoute } from '../../../common/functions/TomTom';
+import { getRoute, getTripRoute } from '../../../common/functions/TomTom';
 import { color } from '../../../common/theme/color';
-import { acceptRequest, getActiveBooking, getRequests } from '../../../common/functions/Booking';
-import {logout, updateLocation} from '../../../common/functions/Authentication'
+import { acceptRequest, finishBooking, finishRequest, getActiveBooking, getRequests, updateRequest } from '../../../common/functions/Booking';
+import {getUser, logout, updateLocation} from '../../../common/functions/Authentication'
 import { logMessage } from '../../../common/functions/Log';
 import db from '../../../db';
 import firebase from 'firebase';
-import { ACCEPTED, ARRIVED, CANCELLED, NEW } from '../../../common/constants/BookingStatus';
+import { ACCEPTED, ARRIVED, CANCELLED, COMPLETED, NEW, ONGOING, PAID } from '../../../common/constants/BookingStatus';
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 const LATITUDE_DELTA = 0.0922;
@@ -60,6 +60,9 @@ export default function HomeScreenDriver({navigation}) {
   const [status, setStatus] = useState(null);
   const [currentDestination, setCurrentDestination] = useState(null);
   const [coords, setCoords] = useState(null);
+  const [tripRoute, setTripRoute] = useState(null);
+  const [destinations, setDestinations] = useState(null);
+  const [completedBooking, setCompletedBooking] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -121,7 +124,7 @@ export default function HomeScreenDriver({navigation}) {
       })
     } catch (error) {
         logMessage({
-            title: 'getActiveBooking Error',
+            title: 'handleRequests Error',
             body: error.message,
         })     
     }
@@ -140,12 +143,13 @@ export default function HomeScreenDriver({navigation}) {
                   setCurrentBooking(null)
               }
           } else {
-              const childSnapshot = await db.ref(`bookings/${bookingId}`).once('value')
-              if(childSnapshot.val()){
+              db.ref(`bookings/${bookingId}`).on('value', (childSnapshot)=>{
+                if(childSnapshot.val()){
                   setCurrentBooking(childSnapshot.val())
               } else {
                   setCurrentBooking(null)
               }
+              })
           }
       } else {
           setCurrentBooking(null)
@@ -153,11 +157,12 @@ export default function HomeScreenDriver({navigation}) {
       })
     } catch (error) {
         logMessage({
-            title: 'getActiveBooking Error',
+            title: 'handleActiveBooking Error',
             body: error.message,
         })     
     }
   }
+  
 
   const animateToUserLoc = (location) => {
     let loc = {
@@ -169,19 +174,79 @@ export default function HomeScreenDriver({navigation}) {
     mapRef.current.animateToRegion(loc, 1 * 1000);
   };
   
-  // useEffect(() => {
-  //   if(currentBooking?.status){
-  //     const bookingStatus = currentBooking.status;
-  //     if(bookingStatus === ACCEPTED){
-  //       setCurrentDestination(currentBooking.pickup)
-  //     }
-  //     else if(bookingStatus === ARRIVED){
-  //       setCurrentDestination(currentBooking.dropoff)
-  //     }
-  //   } 
-  // }, [currentBooking]);
+  useEffect(() => {
+    if(currentBooking?.status !== COMPLETED){
+      handleTripRoute()
+    } else {
+      setCoords(null)
+    }
+  }, [currentBooking]); 
 
-
+  const handleTripRoute = async () => {
+    let data = currentBooking.bookingRequest;
+    const {waypoints, destinations, completed, finished} = await getTripRoute(data, location);
+    if(waypoints){
+      setTripRoute(waypoints)
+      let trip = waypoints[0];
+      setCurrentDestination({
+        trip:trip.data,
+        user:trip.user
+      })
+    } else {
+      setTripRoute(null)
+      setCurrentDestination(null)
+    }
+    if(destinations){
+      setDestinations(destinations.reverse())
+    } else {
+      setDestinations(null)
+    }
+    if(completed){
+      setCompletedBooking(completed[0])
+    } else {
+      setCompletedBooking(null)
+    }
+    if(finished){
+      closeBooking();
+    }
+  }
+  
+  const updateBooking = () => {
+    if(currentDestination?.trip?.isPickup){
+      updateRequest({
+        requestId : currentDestination.trip.request, 
+        bookingId : currentBooking.id, 
+        data : {
+          status: ARRIVED,
+        }
+      })
+    } else if (currentDestination?.trip?.isDropoff) {
+      updateRequest({
+        requestId : currentDestination.trip.request, 
+        bookingId : currentBooking.id, 
+        data : {
+          status: COMPLETED
+        }
+      })
+    }
+  }
+  const completeBooking = () => {
+    finishRequest({
+      requestId : completedBooking.id, 
+      bookingId : currentBooking.id, 
+      riderId: completedBooking.riderId,
+      data : {
+        status: PAID,
+        paid: true,
+      }
+    })
+  }
+  const closeBooking = () => {
+    finishBooking({
+      bookingId : currentBooking.id,
+    })
+  }
+  
 
   return (
     <View style={styles.container}>
@@ -195,13 +260,33 @@ export default function HomeScreenDriver({navigation}) {
         // onRegionChange={setRegionLocation}
         customMapStyle={mapStyle}
       >
-        {coords &&
+        {tripRoute?.map((item, index) =>
+          item.route &&
           <Polyline
-            coordinates={coords}
+            key={index}
+            coordinates={item.route.route}
             strokeColor={color.BLUE_PRIMARY} 
             strokeWidth={4}
           />
-        }
+        )}
+        {/* {tripRoute &&
+          <Polyline
+            coordinates={tripRoute[0].route.route}
+            strokeColor={color.BLUE_PRIMARY} 
+            strokeWidth={4}
+          />
+        } */}
+        {destinations?.map((item, index) =>
+          index !== destinations.length -1 &&
+          // console.log("DESTTTTTTTTT ", item.point)
+          <Marker
+            key={index}
+            coordinate={item.point}
+            title={item.isPickup ? "Pick Up" : "DropOff"}
+            description={item.user?.fullname}
+            pinColor={color.RED_PRIMARY}
+          />
+        )}
         {location && 
           <Marker
             coordinate={location.coords}
@@ -218,7 +303,7 @@ export default function HomeScreenDriver({navigation}) {
           />
         }
       </MapView>
-      {!modalVisible && !currentBooking &&
+      {!currentBooking &&
       <>
         <View style={styles.top}>
           <Text onPress={()=> logout()} style={styles.greetingText}>Hello, {user?.fullname }</Text>
@@ -226,11 +311,40 @@ export default function HomeScreenDriver({navigation}) {
         </View>
       </>
       }
-      {requests && (!currentBooking || currentBooking?.status === NEW) &&
+      {currentBooking &&
+      <>
+        <View style={styles.top}>
+          <Text style={styles.greetingText}>TRIP {currentBooking.status}</Text>
+        </View>
+      </>
+      }
+      {requests && 
         <View style={styles.bottom}>
             <TouchableOpacity style={styles.searchButton} onPress={()=> acceptRequest(requests[0])}>
               <Text style={styles.searchText}> 
                 Accept Request   {user?.fullname }
+              </Text>
+            </TouchableOpacity>
+        </View>
+      }
+      {currentBooking?.status === ONGOING && currentDestination &&
+        <View style={styles.bottom}>
+            <TouchableOpacity style={styles.searchButton} onPress={()=> updateBooking()}>
+              <Text style={styles.searchText}> 
+                {currentDestination?.user?.fullname}
+              </Text>
+              <Text style={styles.searchText}> 
+                {currentDestination?.trip?.isPickup && "ARRIVE"}
+                {currentDestination?.trip?.isDropoff && "DROP"}
+              </Text>
+            </TouchableOpacity>
+        </View>
+      }
+      {completedBooking &&
+        <View style={styles.bottom}>
+            <TouchableOpacity style={styles.searchButton} onPress={()=> completeBooking()}>
+              <Text style={styles.searchText}> 
+                Finish Request
               </Text>
             </TouchableOpacity>
         </View>

@@ -14,7 +14,7 @@ import { logMessage } from '../../../common/functions/Log';
 import db from '../../../db';
 import firebase from 'firebase';
 import { getUser } from '../../../common/functions/Authentication';
-import { NEW } from '../../../common/constants/BookingStatus';
+import { COMPLETED, NEW, PAID } from '../../../common/constants/BookingStatus';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -58,6 +58,7 @@ export default function HomeScreen({navigation}) {
   const [driverDetails, setDriverDetails] = useState(null);
 
   const [currentBooking, setCurrentBooking] = useState(null);
+  const [currentRequest, setCurrentRequest] = useState(null);
   const [status, setStatus] = useState(null);
   const [coords, setCoords] = useState(null);
   const [driverPickupRoute, setDriverPickupRoute] = useState(null);
@@ -158,12 +159,20 @@ export default function HomeScreen({navigation}) {
                     setCurrentBooking(null)
                 }
             } else {
-                const childSnapshot = await db.ref(`bookings/${bookingId}`).once('value')
+              db.ref(`bookings/${bookingId}`).on('value', (childSnapshot)=>{
                 if(childSnapshot.val()){
-                    setCurrentBooking(childSnapshot.val())
+                  setCurrentBooking(childSnapshot.val())
                 } else {
-                    setCurrentBooking(null)
-                }
+                  setCurrentBooking(null)
+              }
+              })
+              db.ref(`bookings/${bookingId}/bookingRequest/${requestId}`).on('value', (childSnapshot)=>{
+                if(childSnapshot.val()){
+                  setCurrentRequest(childSnapshot.val())
+                } else {
+                  setCurrentRequest(null)
+              }
+              })
             }
         } else {
             setCurrentBooking(null)
@@ -223,8 +232,14 @@ export default function HomeScreen({navigation}) {
     setDistance(distance)
     setDuration(duration)
   }
+
   useEffect(() => {
-    handleDriver()
+    if(driver){
+      handleDriver()
+    } else {
+      setDriverDetails(null)
+      setDriverPickupRoute(null)
+    }
   }, [driver]);
   
   useEffect(() => {
@@ -239,14 +254,14 @@ export default function HomeScreen({navigation}) {
       longitude: driverDetails.lastLocation?.coords.longitude
     }
     const riderLoc = await getRiderPickupLocation()
-    const {route, distance, duration} = await getRoute(driverLoc, riderLoc);
+    const {route} = await getRoute(driverLoc, riderLoc);
     setDriverPickupRoute(route)
   }
 
   const getRiderPickupLocation = async () => {
     const requestId = user?.activeBooking?.requestId;
     if(requestId) {
-      let data = currentBooking.bookingRequest;
+      let data = currentBooking?.bookingRequest;
       const bookings = Object.keys(data).map((i) => {
         data[i].id = i
         return data[i]
@@ -341,7 +356,7 @@ export default function HomeScreen({navigation}) {
         
         
       </MapView>
-      {!modalVisible && !currentBooking &&
+      {!modalVisible && !currentRequest &&
       <>
         <View style={styles.top}>
           <Text onPress={()=> logout()} style={styles.greetingText}>Hello, {user?.fullname }</Text>
@@ -360,7 +375,25 @@ export default function HomeScreen({navigation}) {
         </View>
       </>
       }
-      {locationChoose && !currentBooking &&
+      {!modalVisible && currentRequest && currentBooking && (currentRequest?.status !== COMPLETED && currentRequest?.status !== PAID) &&
+      <>
+        <View style={styles.top}>
+          <Text style={styles.greetingText}>TRIP {currentRequest?.status}</Text>
+        </View>
+      </>
+      }
+      {console.log("CUREETN RQ ", currentRequest)}         
+      {console.log("currentBooking  ", currentBooking)}         
+      { currentRequest && currentBooking && (currentRequest?.status === COMPLETED || currentBooking?.status !== COMPLETED) &&
+        <View style={styles.bottom}>
+          <TouchableOpacity style={styles.searchButton} onPress={()=> handleLocationPick()}>
+            <Text style={styles.searchText}> 
+              PAY
+            </Text>
+          </TouchableOpacity>
+        </View>
+      }
+      {locationChoose && !currentRequest &&
         <View style={styles.bottom}>
           <TouchableOpacity style={styles.searchButton} onPress={()=> handleLocationPick()}>
             <Text style={styles.searchText}> 
