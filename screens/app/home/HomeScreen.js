@@ -14,6 +14,7 @@ import { logMessage } from '../../../common/functions/Log';
 import db from '../../../db';
 import firebase from 'firebase';
 import { getUser } from '../../../common/functions/Authentication';
+import { NEW } from '../../../common/constants/BookingStatus';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -59,6 +60,7 @@ export default function HomeScreen({navigation}) {
   const [currentBooking, setCurrentBooking] = useState(null);
   const [status, setStatus] = useState(null);
   const [coords, setCoords] = useState(null);
+  const [driverPickupRoute, setDriverPickupRoute] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -83,8 +85,6 @@ export default function HomeScreen({navigation}) {
   useEffect(() => {
     if(user.activeBooking){
       handleActiveBooking()
-    } else {
-      setCurrentBooking(null)
     }
   }, [user.activeBooking]);
 
@@ -149,29 +149,29 @@ export default function HomeScreen({navigation}) {
     try {
       db.ref(`users/${firebase.auth().currentUser.uid}/activeBooking`).on('value', async (snapshot)=>{
         if(snapshot.val()){
-          const {id, status} = snapshot.val()
-          if(status === "NEW"){
-              const childSnapshot = await db.ref(`bookingRequest/${id}`).once('value')
-              if(childSnapshot.val()){
-                  setCurrentBooking(childSnapshot.val())
-              } else {
-                  setCurrentBooking(null)
-              }
-          } else {
-              const childSnapshot = await db.ref(`bookings/${id}`).once('value')
-              if(childSnapshot.val()){
-                  setCurrentBooking(childSnapshot.val())
-              } else {
-                  setCurrentBooking(null)
-              }
-          }
-      } else {
-          setCurrentBooking(null)
-      }
+            const {bookingId, requestId, status} = snapshot.val()
+            if(status === NEW){
+                const childSnapshot = await db.ref(`bookingRequest/${requestId}`).once('value')
+                if(childSnapshot.val()){
+                    setCurrentBooking(childSnapshot.val())
+                } else {
+                    setCurrentBooking(null)
+                }
+            } else {
+                const childSnapshot = await db.ref(`bookings/${bookingId}`).once('value')
+                if(childSnapshot.val()){
+                    setCurrentBooking(childSnapshot.val())
+                } else {
+                    setCurrentBooking(null)
+                }
+            }
+        } else {
+            setCurrentBooking(null)
+        }
       })
     } catch (error) {
         logMessage({
-            title: 'getActiveBooking Error',
+            title: 'handleActiveBooking Error',
             body: error.message,
         })     
     }
@@ -223,17 +223,61 @@ export default function HomeScreen({navigation}) {
     setDistance(distance)
     setDuration(duration)
   }
-
   useEffect(() => {
     handleDriver()
   }, [driver]);
+  
+  useEffect(() => {
+    if(driverDetails){
+      handleDriverPickupRoute()
+    }
+  }, [driverDetails]);
 
-  const handleDriver = async () => {
+  const handleDriverPickupRoute = async () => {
+    const driverLoc = {
+      latitude: driverDetails.lastLocation?.coords.latitude,
+      longitude: driverDetails.lastLocation?.coords.longitude
+    }
+    const riderLoc = await getRiderPickupLocation()
+    const {route, distance, duration} = await getRoute(driverLoc, riderLoc);
+    setDriverPickupRoute(route)
+  }
+
+  const getRiderPickupLocation = async () => {
+    const requestId = user?.activeBooking?.requestId;
+    if(requestId) {
+      let data = currentBooking.bookingRequest;
+      const bookings = Object.keys(data).map((i) => {
+        data[i].id = i
+        return data[i]
+      })
+      const riderRequest = bookings.filter((item) => item.id === requestId)[0];
+      let riderLoc = {
+        latitude: riderRequest.pickup.latitude,
+        longitude: riderRequest.pickup.longitude
+      }
+      return riderLoc;
+    }
+  }
+
+  const handleDriver = () => {
     if(driver){
-      const res = await getUser(driver)
-      setDriverDetails(res)
-    } else {
-      setDriverDetails(null)
+      try {
+        db.ref(`users/${driver}`).on('value', (snapshot)=> {
+          if(snapshot.val()){
+            setDriverDetails(snapshot.val())
+          } else{
+            setDriverDetails(null);
+          }
+        })
+      } 
+      catch (error) {
+        logMessage({
+            title: 'handleDriver Error',
+            body: error.message,
+        })
+        setDriverDetails(null);
+    }
     }
   }
 
@@ -280,9 +324,24 @@ export default function HomeScreen({navigation}) {
             coordinate={to}
           />
         }
+        {driverDetails &&
+          <Marker
+            coordinate={driverDetails.lastLocation?.coords}
+            pinColor={color.BLUE_PRIMARY}
+          />
+        }
+        {driverPickupRoute &&
+          <Polyline
+            coordinates={driverPickupRoute}
+            strokeColor={color.BLUE_PRIMARY} 
+            strokeWidth={4}
+          />
+        }
+
+        
         
       </MapView>
-      {!modalVisible && 
+      {!modalVisible && !currentBooking &&
       <>
         <View style={styles.top}>
           <Text onPress={()=> logout()} style={styles.greetingText}>Hello, {user?.fullname }</Text>
@@ -301,7 +360,7 @@ export default function HomeScreen({navigation}) {
         </View>
       </>
       }
-      {locationChoose &&
+      {locationChoose && !currentBooking &&
         <View style={styles.bottom}>
           <TouchableOpacity style={styles.searchButton} onPress={()=> handleLocationPick()}>
             <Text style={styles.searchText}> 

@@ -131,16 +131,16 @@ export default function HomeScreenDriver({navigation}) {
     try {
       db.ref(`users/${firebase.auth().currentUser.uid}/activeBooking`).on('value', async (snapshot)=>{
         if(snapshot.val()){
-          const {id, status} = snapshot.val()
-          if(status === "NEW"){
-              const childSnapshot = await db.ref(`bookingRequest/${id}`).once('value')
+          const {bookingId, requestId, status} = snapshot.val()
+          if(status === NEW){
+              const childSnapshot = await db.ref(`bookingRequest/${requestId}`).once('value')
               if(childSnapshot.val()){
                   setCurrentBooking(childSnapshot.val())
               } else {
                   setCurrentBooking(null)
               }
           } else {
-              const childSnapshot = await db.ref(`bookings/${id}`).once('value')
+              const childSnapshot = await db.ref(`bookings/${bookingId}`).once('value')
               if(childSnapshot.val()){
                   setCurrentBooking(childSnapshot.val())
               } else {
@@ -188,7 +188,7 @@ export default function HomeScreenDriver({navigation}) {
       <MapView
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
-        // showsUserLocation={true}
+        showsUserLocation={true}
         loadingEnabled
         style={{height:"100%", width:"100%"}}
         initialRegion={QATAR_REGION}
@@ -218,7 +218,14 @@ export default function HomeScreenDriver({navigation}) {
           />
         }
       </MapView>
-        
+      {!modalVisible && !currentBooking &&
+      <>
+        <View style={styles.top}>
+          <Text onPress={()=> logout()} style={styles.greetingText}>Hello, {user?.fullname }</Text>
+          <Image source={Avatar} style={styles.userImg} />
+        </View>
+      </>
+      }
       {requests && (!currentBooking || currentBooking?.status === NEW) &&
         <View style={styles.bottom}>
             <TouchableOpacity style={styles.searchButton} onPress={()=> acceptRequest(requests[0])}>

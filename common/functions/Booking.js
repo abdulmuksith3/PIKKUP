@@ -29,7 +29,7 @@ export const AddBookingRequest = async (data) => {
             drivers: drivers.map(driver => driver.id)
         });
         db.ref(`users/${firebase.auth().currentUser.uid}/activeBooking`).update({
-            id: key,
+            requestId: key,
             status: NEW
         });
         drivers.forEach(driver => {
