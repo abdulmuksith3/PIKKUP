@@ -15,7 +15,6 @@ export default function LoginScreen({navigation}) {
   const [fullname, setFullname] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
   const [passwordVisible, setPasswordVisible] = useState(false)
   const [phone, setPhone] = useState("")
   const [gender, setGender] = useState(GENDERS[0])
@@ -34,10 +33,6 @@ export default function LoginScreen({navigation}) {
       showErrorMessage("Enter a strong Password")
       return false;
     }
-    // if (password !== confirmPassword) {
-    //   showErrorMessage("Password does not match")
-    //   return false;
-    // }
     signUp();
   };
 

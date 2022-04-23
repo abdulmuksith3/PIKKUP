@@ -110,8 +110,6 @@ const removeDriverRequest = async (id) => {
 
 export const acceptRequest = async (request) => {
     const {id, riderId} = request;
-    // console.log({id})
-    // return;
     const driverId = firebase.auth().currentUser.uid;
     try {
         const myRef = db.ref().push();
