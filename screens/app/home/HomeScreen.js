@@ -5,6 +5,7 @@ import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from "react-native-maps"
 import { mapStyle } from '../../../common/theme/map';
 import * as Location from 'expo-location';
 import Avatar from '../../../assets/images/avatar.png'
+import Avatar2 from '../../../assets/images/avatar2.png'
 import { UserContext } from '../../../App';
 import TripModal from '../../../common/components/TripModal';
 import { getRoute } from '../../../common/functions/TomTom';
@@ -15,6 +16,7 @@ import db from '../../../db';
 import firebase from 'firebase';
 import { getUser } from '../../../common/functions/Authentication';
 import { COMPLETED, NEW, PAID } from '../../../common/constants/BookingStatus';
+import { Icon } from 'react-native-elements';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -357,23 +359,30 @@ export default function HomeScreen({navigation}) {
         
       </MapView>
       {!modalVisible && !currentRequest &&
-      <>
-        <View style={styles.top}>
-          <Text onPress={()=> logout()} style={styles.greetingText}>Hello, {user?.fullname }</Text>
-          <Image source={Avatar} style={styles.userImg} />
-        </View>
-      
-        <View style={styles.bottom}>
-          <View>
-            <Text>Saved Locations</Text>
+        <>
+          <View style={styles.top}>
+            <Text style={styles.greetingText}>Hello, {user?.fullname }</Text>
+            <Image source={Avatar2} style={styles.userImg} />
           </View>
-          <View>
-            <TouchableOpacity style={styles.searchButton} onPress={()=>setModalVisible(true)}>
-              <Text style={styles.searchText}>Where are you going?</Text>
-            </TouchableOpacity>
+        
+          <View style={styles.bottom}>
+            {/* <View>
+              <Text>Saved Locations</Text>
+            </View> */}
+            <View>
+              
+              <TouchableOpacity style={styles.searchButton} onPress={()=>setModalVisible(true)}>
+                <Icon
+                  size={25}
+                  type={"feather"}
+                  name={"search"}
+                  color={color.BLUE_PRIMARY}
+                />
+                <Text style={styles.searchText}>Where are you going?</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </>
+        </>
       }
       {!modalVisible && currentRequest && currentBooking && (currentRequest?.status !== COMPLETED && currentRequest?.status !== PAID) &&
       <>
@@ -382,8 +391,8 @@ export default function HomeScreen({navigation}) {
         </View>
       </>
       }
-      {console.log("CUREETN RQ ", currentRequest)}         
-      {console.log("currentBooking  ", currentBooking)}         
+      {/* {console.log("CUREETN RQ ", currentRequest)}          */}
+      {/* {console.log("currentBooking  ", currentBooking)}          */}
       { currentRequest && currentBooking && (currentRequest?.status === COMPLETED || currentBooking?.status !== COMPLETED) &&
         <View style={styles.bottom}>
           <TouchableOpacity style={styles.searchButton} onPress={()=> handleLocationPick()}>

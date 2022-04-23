@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import { KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Text, TouchableOpacity, View} from 'react-native';
+import { KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Text, TouchableOpacity, View, Image} from 'react-native';
 import { styles } from './Styles';
 import useOnKeyboard from '../../../common/hooks/useOnKeyboard';
 import { showErrorMessage, showSuccessMessage } from '../../../common/functions/FlashMessage';
@@ -8,6 +8,8 @@ import { color } from '../../../common/theme/color';
 import firebase from "firebase";
 import "firebase/auth";
 import db from '../../../db'
+import ButtonNext from '../../../common/components/ButtonNext';
+import Car from '../../../assets/images/car.png'
 
 const GENDERS = ['Male', 'Female']
 
@@ -62,7 +64,55 @@ export default function LoginScreen({navigation}) {
   return (
     <TouchableWithoutFeedback onPress={()=> Keyboard.dismiss()}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" && "padding"} style={styles.container}>
-        <Text onPress={()=>navigation.navigate("WelcomeScreen")} >Register Screen</Text>
+        <View style={styles.containerTop}>
+          <Image source={Car} style={styles.carImage} />
+        </View>
+        <View style={styles.containerCenter}>
+          <Text style={styles.titleText}>Register</Text>
+          <Input 
+              placeholder={'Full Name'}
+              onChangeText={(x)=> setFullname(x)}
+              value={fullname}
+              inputStyle={styles.input}
+              inputContainerStyle={styles.inputContainer}
+            />
+          <Input 
+              placeholder={'Email Address'}
+              onChangeText={(x)=> setEmail(x)}
+              value={email}
+              inputStyle={styles.input}
+              inputContainerStyle={styles.inputContainer}
+            />
+            <Input 
+              placeholder={"*********" }
+              secureTextEntry={!passwordVisible}
+              onChangeText={(x)=> setPassword(x)}
+              value={password}
+              inputStyle={styles.input}
+              inputContainerStyle={styles.inputContainer}
+              rightIcon={
+                <TouchableOpacity style={{marginRight: 15}} onPress={()=>setPasswordVisible(!passwordVisible)}>
+                  <Icon
+                    name={passwordVisible ? 'eye' : 'eye-off'}
+                    size={18}
+                    color={color.GRAY_PRIMARY}
+                    type={"feather"}
+                  />
+                </TouchableOpacity>                  
+              }
+            />
+            
+           <Text onPress={()=>navigation.navigate("LoginScreen")} style={styles.hyperlinkText}>Already have an account? Login</Text>
+        </View>
+          {!keyboardVisible && 
+            <View style={styles.containerBottom}>
+                <ButtonNext 
+                  onPress={()=> login()}
+                />
+            </View>
+          }
+        
+        {/* <Text onPress={()=>navigation.navigate("WelcomeScreen")} >Register Screen</Text>
         <Input 
           placeholder={'Email Address'}
           onChangeText={(x)=> setEmail(x)}
@@ -101,14 +151,14 @@ export default function LoginScreen({navigation}) {
           value={phone}
           inputStyle={styles.input}
           inputContainerStyle={styles.inputContainer}
-        />
-        {!keyboardVisible && 
+        /> */}
+        {/* {!keyboardVisible && 
           <View style={styles.buttonView}>
             <TouchableOpacity onPress={()=> validate()} style={styles.loginButton}>
               <Text style={styles.loginText}>SIGN UP</Text>
             </TouchableOpacity>
           </View>
-        }
+        } */}
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );

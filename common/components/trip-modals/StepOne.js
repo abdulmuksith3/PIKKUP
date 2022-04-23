@@ -64,6 +64,6 @@ export default function StepOne(props) {
 const styles = StyleSheet.create({
   container: {
     flex:1,
-    backgroundColor: color.BLUE_SECONDARY,
+    backgroundColor: 'transparent',
   },
 });

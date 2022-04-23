@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import { KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Text, TouchableOpacity, View} from 'react-native';
+import { KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Text, TouchableOpacity, View, Image} from 'react-native';
 import { styles } from './Styles';
 import useOnKeyboard from '../../../common/hooks/useOnKeyboard';
 import { useIsFocused } from '@react-navigation/native';
@@ -8,6 +8,8 @@ import {Input, Icon} from 'react-native-elements';
 import { color } from '../../../common/theme/color';
 import firebase from "firebase";
 import "firebase/auth";
+import ButtonNext from '../../../common/components/ButtonNext';
+import Car from '../../../assets/images/car.png'
 
 export default function LoginScreen({navigation}) {
   const [email, setEmail] = useState("")
@@ -44,41 +46,46 @@ export default function LoginScreen({navigation}) {
   return (
     <TouchableWithoutFeedback onPress={()=> Keyboard.dismiss()}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" && "padding"} style={styles.container}>
-        <Text onPress={()=>navigation.navigate("RegisterScreen")} >Login Screen</Text>
-        <Input 
-          placeholder={'Email Address'}
-          onChangeText={(x)=> setEmail(x)}
-          value={email}
-          inputStyle={styles.input}
-          inputContainerStyle={styles.inputContainer}
-          // errorStyle={}
+        <View style={styles.containerTop}>
+          <Image source={Car} style={styles.carImage} />
           
-        />
-        <Input 
-          placeholder={"*********" }
-          secureTextEntry={!passwordVisible}
-          onChangeText={(x)=> setPassword(x)}
-          value={password}
-          inputStyle={styles.input}
-          inputContainerStyle={styles.inputContainer}
-          rightIcon={
-            <TouchableOpacity onPress={()=>setPasswordVisible(!passwordVisible)}>
-              <Icon
-                name={passwordVisible ? 'eye' : 'eye-off'}
-                size={18}
-                color={color.GRAY_PRIMARY}
-                type={"feather"}
-              />
-            </TouchableOpacity>                  
+        </View>
+        <View style={styles.containerCenter}>
+          <Text style={styles.titleText}>Login</Text>
+          <Input 
+            placeholder={'Email Address'}
+            onChangeText={(x)=> setEmail(x)}
+            value={email}
+            inputStyle={styles.input}
+            inputContainerStyle={styles.inputContainer}
+          />
+          <Input 
+            placeholder={"*********" }
+            secureTextEntry={!passwordVisible}
+            onChangeText={(x)=> setPassword(x)}
+            value={password}
+            inputStyle={styles.input}
+            inputContainerStyle={styles.inputContainer}
+            rightIcon={
+              <TouchableOpacity style={{marginRight: 15}} onPress={()=>setPasswordVisible(!passwordVisible)}>
+                <Icon
+                  name={passwordVisible ? 'eye' : 'eye-off'}
+                  size={18}
+                  color={color.GRAY_PRIMARY}
+                  type={"feather"}
+                />
+              </TouchableOpacity>                  
+            }
+          />
+           <Text onPress={()=>navigation.navigate("RegisterScreen")} style={styles.hyperlinkText}>New User? Register</Text>
+        </View>
+          {!keyboardVisible && 
+            <View style={styles.containerBottom}>
+                <ButtonNext 
+                  onPress={()=> login()}
+                />
+            </View>
           }
-        />
-        {!keyboardVisible && 
-          <View style={styles.buttonView}>
-            <TouchableOpacity onPress={()=> login()} style={styles.loginButton}>
-              <Text style={styles.loginText}>Login</Text>
-            </TouchableOpacity>
-          </View>
-        }
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );

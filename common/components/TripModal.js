@@ -7,11 +7,13 @@ import StepTwo from './trip-modals/StepTwo';
 import StepThree from './trip-modals/StepThree';
 import StepFour from './trip-modals/StepFour';
 import { AddBookingRequest } from '../functions/Booking';
+import { font } from '../theme/font';
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
 
 const NO_OF_STATES = 4;
+const numbers = [1,2,3,4]
 
 export default function TripModal(props) {
   const {
@@ -69,6 +71,7 @@ export default function TripModal(props) {
       status : "NEW"
     })
   }
+
   
   return (
     <Modal
@@ -78,7 +81,16 @@ export default function TripModal(props) {
     > 
       <View style={styles.container}>
         <View style={styles.containerTop}>
-          <Text onPress={()=>setModalVisible(false)}>{currentState}</Text>
+          {numbers.map((item, index) => 
+            currentState >= item ?
+            <View key={index} style={styles.numberBox}>
+              <Text style={styles.boxText}>{item}</Text>
+            </View>
+            :
+            <View key={index} style={styles.numberBoxInactive}>
+              <Text style={styles.boxTextInactive}>{item}</Text>
+            </View>
+          )}
         </View>
         <View style={styles.containerBottom}>
           {currentState === 1 &&
@@ -137,15 +149,53 @@ const styles = StyleSheet.create({
     height:HEIGHT/1.2,
     width:WIDTH,
     backgroundColor:color.BLUE_PRIMARY,
+    borderTopRightRadius: 45,
+    borderTopLeftRadius: 45,
     bottom:0,
     position:"absolute",
+    // borderTopRightRadius: 45,
+    // borderTopLeftRadius: 45
   },
   containerTop:{
     flex:1,
-    backgroundColor:"red"
+    backgroundColor:color.BLUE_PRIMARY,
+    borderTopRightRadius: 45,
+    borderTopLeftRadius: 45,
+    justifyContent:"space-evenly",
+    alignItems:"center",
+    flexDirection:"row"
   },
   containerBottom:{
     flex:5,
-    backgroundColor:"green"
+    backgroundColor:color.WHITE_PRIMARY,
+    borderTopRightRadius: 45,
+    borderTopLeftRadius: 45,
+    // backgroundColor:"green"
+  },
+  numberBox:{
+    backgroundColor:color.WHITE_PRIMARY,
+    height: 45,
+    width:45,
+    justifyContent:"center",
+    alignItems:"center",
+    borderRadius: 5
+  },
+  boxText:{
+    fontFamily: font.SEMI_BOLD,
+    color: color.BLUE_PRIMARY,
+    fontSize: 18,
+  },
+  numberBoxInactive:{
+    backgroundColor:color.WHITE_TRANSPARENT,
+    height: 45,
+    width:45,
+    justifyContent:"center",
+    alignItems:"center",
+    borderRadius: 5
+  },
+  boxTextInactive:{
+    fontFamily: font.SEMI_BOLD,
+    color: color.WHITE_PRIMARY,
+    fontSize: 18,
   }
 });
