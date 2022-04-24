@@ -44,12 +44,10 @@ export default function StepFour(props) {
           </View>
           <Text style={styles.optionText}>{driver ? "Driver Found" : "Looking for Driver"}</Text>
           <Icon
-            // name={'checkcircle'}
-            name={'loader'}
+            name={driver ? 'checkcircle' : 'loader'}
             size={30}
             color={color.BLUE_PRIMARY}
-            // type={"antdesign"}
-            type={"feather"}
+            type={driver?"antdesign" : "feather"}
           />
         </TouchableOpacity>
       </View>

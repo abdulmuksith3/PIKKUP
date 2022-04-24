@@ -18,6 +18,9 @@ import { getUser } from '../../../common/functions/Authentication';
 import { COMPLETED, NEW, PAID } from '../../../common/constants/BookingStatus';
 import { Icon } from 'react-native-elements';
 import { CAR_TYPES } from '../../../common/constants/Cars';
+import { LOCATIONS } from '../../../common/constants/Locations';
+import { showSuccessMessage } from '../../../common/functions/FlashMessage';
+import ButtonPrimary from '../../../common/components/ButtonPrimary';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -299,7 +302,15 @@ export default function HomeScreen({navigation}) {
     }
   }
 
-
+  const handleSavedLocationPress = (item) => {
+    setTo({latitude: item.lat, longitude: item.lng})
+    setModalVisible(true)
+  }
+  const handleRiderComplete = () => {
+    setCurrentBooking(null)
+    setCurrentRequest(null)
+  }
+  
 
   return (
     <View style={styles.container}>
@@ -355,23 +366,37 @@ export default function HomeScreen({navigation}) {
             strokeWidth={4}
           />
         }
-
-        
         
       </MapView>
       {!modalVisible && !currentRequest &&
         <>
           <View style={styles.top}>
-            <Text style={styles.greetingText}>Hello, {user?.fullname }</Text>
-            <Image source={Avatar2} style={styles.userImg} />
+            <Text style={styles.greetingText}>Hello, Rider 3</Text>
+            <TouchableOpacity onPress={()=>navigation.navigate('ProfileScreen')} >
+              <Image source={Avatar2} style={styles.userImg} />
+            </TouchableOpacity>
           </View>
         
-          <View style={styles.bottom}>
-            {/* <View>
-              <Text>Saved Locations</Text>
-            </View> */}
+          <View style={styles.bottomMain}>
+          <ScrollView showsHorizontalScrollIndicator={false} horizontal style={styles.locationScrollView}>
+            {
+              LOCATIONS?.map( (item, index )=> 
+                <TouchableOpacity key={index} style={styles.locationContainer} onPress={()=>handleSavedLocationPress(item)}>
+                  <View style={styles.iconContainer}>
+                    <Icon
+                    name={item.iconName}
+                    size={item.iconSize}
+                    color={color.WHITE_PRIMARY}
+                    type={item.iconType}
+                    />
+                  </View>
+                  <Text style={styles.locationName}>{item.name}</Text>
+                </TouchableOpacity>
+              )
+            }
+            <View style={{width:50}}></View>
+            </ScrollView>
             <View>
-              
               <TouchableOpacity style={styles.searchButton} onPress={()=>setModalVisible(true)}>
                 <Icon
                   size={25}
@@ -392,27 +417,25 @@ export default function HomeScreen({navigation}) {
         </View>
       </>
       }
-      {/* {console.log("CUREETN RQ ", currentRequest)}          */}
-      {/* {console.log("currentBooking  ", currentBooking)}          */}
       { currentRequest && currentBooking && (currentRequest?.status === COMPLETED || currentBooking?.status !== COMPLETED) &&
         <View style={styles.bottom}>
-          <TouchableOpacity style={styles.searchButton} onPress={()=> handleLocationPick()}>
-            <Text style={styles.searchText}> 
-              PAY
-            </Text>
-          </TouchableOpacity>
+          <ButtonPrimary 
+            title={"Complete & Close"}
+            size={"large"}
+            onPress={()=> handleRiderComplete()}
+          />
         </View>
       }
       {locationChoose && !currentRequest &&
         <View style={styles.bottom}>
-          <TouchableOpacity style={styles.searchButton} onPress={()=> handleLocationPick()}>
-            <Text style={styles.searchText}> 
-              {
+          <ButtonPrimary 
+            title={
               pickup ? "Confirm Pick Up" : 
               dropoff ? "Confirm Drop-Off" : "Continue"
-              }
-              </Text>
-          </TouchableOpacity>
+            }
+            size={"large"}
+            onPress={()=> handleLocationPick()}
+          />
       </View>
       }
       <TripModal 

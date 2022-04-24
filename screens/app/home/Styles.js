@@ -20,14 +20,20 @@ export const styles = StyleSheet.create({
     paddingTop:30,
     paddingBottom:0
   },
-  bottom:{
+  bottomMain:{
     position:"absolute",
-    // backgroundColor:"red",
     bottom:0,
-    height:"15%",
+    minHeight:"15%",
     width:"100%",
     justifyContent:"flex-end",
-    // alignItems:"center"
+  },
+  bottom:{
+    position:"absolute",
+    bottom:0,
+    height:"15%",
+    width:"90%",
+    justifyContent:"center",
+    alignItems:"center"
   },
   greetingText:{
     fontFamily: font.BOLD,
@@ -64,6 +70,41 @@ export const styles = StyleSheet.create({
     paddingLeft: 10,
     fontFamily: font.REGULAR,
     fontSize: 16,
+    color: color.BLACK_PRIMARY
+  },
+  locationScrollView:{
+    paddingLeft: 30,
+    marginBottom: 10
+  },
+  locationContainer:{
+    flexDirection:"row",
+    height: 55,
+    width: 120,
+    borderRadius: 10,
+    backgroundColor: color.WHITE_PRIMARY,
+    marginRight: 15,
+    alignItems:"center",
+    shadowColor: color.BLUE_PRIMARY,
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.34,
+    shadowRadius: 6.27,
+    elevation: 10,
+  },
+  iconContainer:{
+    backgroundColor: color.BLUE_PRIMARY,
+    height: "100%",
+    width: "40%",
+    borderRadius: 10,
+    justifyContent:"center",
+    alignItems:"center"
+  },
+  locationName: {
+    paddingLeft: 10,
+    fontFamily: font.REGULAR,
+    fontSize: 14,
     color: color.BLACK_PRIMARY
   }
 });

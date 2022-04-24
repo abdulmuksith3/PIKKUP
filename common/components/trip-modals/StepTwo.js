@@ -33,8 +33,8 @@ export default function StepTwo(props) {
         <Text style={styles.titleText}>Select Car</Text>
         <View style={styles.carsContainer}>
             {CAR_TYPES?.map( (item, index) => 
-            <View style={styles.carView}>
-              <TouchableOpacity onPress={()=>setCarType(item)} key={index} style={carType.id === item.id ? styles.numberBox : styles.numberBoxInactive}>
+            <View key={index} style={styles.carView}>
+              <TouchableOpacity onPress={()=>setCarType(item)} style={carType.id === item.id ? styles.numberBox : styles.numberBoxInactive}>
                 <Image source={item.image} />
               </TouchableOpacity>
               <Text style={carType.id === item.id ? styles.boxText : styles.boxTextInactive}>{item.type}</Text>

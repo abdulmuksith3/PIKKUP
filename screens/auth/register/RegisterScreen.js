@@ -107,7 +107,7 @@ export default function LoginScreen({navigation}) {
           {!keyboardVisible && 
             <View style={styles.containerBottom}>
                 <ButtonNext 
-                  onPress={()=> login()}
+                  onPress={()=> validate()}
                 />
             </View>
           }

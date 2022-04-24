@@ -5,6 +5,7 @@ import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from "react-native-maps"
 import { mapStyle } from '../../../common/theme/map';
 import * as Location from 'expo-location';
 import Avatar from '../../../assets/images/avatar.png'
+import Avatar2 from '../../../assets/images/avatar2.png'
 import { UserContext } from '../../../App';
 import TripModal from '../../../common/components/TripModal';
 import { getRoute, getTripRoute } from '../../../common/functions/TomTom';
@@ -15,6 +16,9 @@ import { logMessage } from '../../../common/functions/Log';
 import db from '../../../db';
 import firebase from 'firebase';
 import { ACCEPTED, ARRIVED, CANCELLED, COMPLETED, NEW, ONGOING, PAID } from '../../../common/constants/BookingStatus';
+import ButtonPrimary from '../../../common/components/ButtonPrimary';
+import ButtonSecondary from '../../../common/components/ButtonSecondary';
+
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 const LATITUDE_DELTA = 0.0922;
@@ -32,37 +36,15 @@ export default function HomeScreenDriver({navigation}) {
   const {user} = state;
   const mapRef = useRef();
   const [location, setLocation] = useState(null);
-  const [regionLocation, setRegionLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null)
-  const [modalVisible, setModalVisible] = useState(false);
-  const [currentState, setCurrentState] = useState(1);
-  
-  const [from, setFrom] = useState(null);
-  const [to, setTo] = useState(null);
-  const [seats, setSeats] = useState(1);
-  const [isSchedule, setIsSchedule] = useState(false);
-  const [locationChoose, setLocationChoose] = useState(false);
-  const [pickup, setPickup] = useState(false);
-  const [dropoff, setDropoff] = useState(false);
-
-  const [carType, setCarType] = useState(0);
-  const [distance, setDistance] = useState(null);
-  const [duration, setDuration] = useState(0);
-  const [price, setPrice] = useState(0);
-  
-  const [selectedPayment, setSelectedPayment] = useState(0);
-  const [promo, setPromo] = useState(null);
-
-  const [driver, setDriver] = useState(null);
-
   const [currentBooking, setCurrentBooking] = useState(null);
   const [requests, setRequests] = useState(null);
-  const [status, setStatus] = useState(null);
   const [currentDestination, setCurrentDestination] = useState(null);
-  const [coords, setCoords] = useState(null);
   const [tripRoute, setTripRoute] = useState(null);
   const [destinations, setDestinations] = useState(null);
   const [completedBooking, setCompletedBooking] = useState(null);
+  const [from, setFrom] = useState(null);
+  const [to, setTo] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -113,11 +95,13 @@ export default function HomeScreenDriver({navigation}) {
           let requests = []
           snapshot.forEach(async (childSnapshot) => {  
             const req = childSnapshot.val()
-            await db.ref(`users/${req.riderId}`).once('value', (rider) => { 
+            db.ref(`users/${req.riderId}`).on('value', (rider) => { 
               requests.push({...req, rider: rider})
             })
             if(requests.length > 0){
               setRequests(requests)
+            } else {
+              setRequests(null)
             }
           })
         }
@@ -175,10 +159,10 @@ export default function HomeScreenDriver({navigation}) {
   };
   
   useEffect(() => {
-    if(currentBooking?.status !== COMPLETED){
+    if(currentBooking && currentBooking.status !== COMPLETED){
       handleTripRoute()
     } else {
-      setCoords(null)
+      setTripRoute(null)
     }
   }, [currentBooking]); 
 
@@ -231,6 +215,7 @@ export default function HomeScreenDriver({navigation}) {
     }
   }
   const completeBooking = () => {
+
     finishRequest({
       requestId : completedBooking.id, 
       bookingId : currentBooking.id, 
@@ -241,6 +226,7 @@ export default function HomeScreenDriver({navigation}) {
       }
     })
   }
+
   const closeBooking = () => {
     finishBooking({
       bookingId : currentBooking.id,
@@ -257,7 +243,6 @@ export default function HomeScreenDriver({navigation}) {
         loadingEnabled
         style={{height:"100%", width:"100%"}}
         initialRegion={QATAR_REGION}
-        // onRegionChange={setRegionLocation}
         customMapStyle={mapStyle}
       >
         {tripRoute?.map((item, index) =>
@@ -269,16 +254,8 @@ export default function HomeScreenDriver({navigation}) {
             strokeWidth={4}
           />
         )}
-        {/* {tripRoute &&
-          <Polyline
-            coordinates={tripRoute[0].route.route}
-            strokeColor={color.BLUE_PRIMARY} 
-            strokeWidth={4}
-          />
-        } */}
         {destinations?.map((item, index) =>
           index !== destinations.length -1 &&
-          // console.log("DESTTTTTTTTT ", item.point)
           <Marker
             key={index}
             coordinate={item.point}
@@ -306,9 +283,11 @@ export default function HomeScreenDriver({navigation}) {
       {!currentBooking &&
       <>
         <View style={styles.top}>
-          <Text onPress={()=> logout()} style={styles.greetingText}>Hello, {user?.fullname }</Text>
-          <Image source={Avatar} style={styles.userImg} />
-        </View>
+            <Text style={styles.greetingText}>Hello, {user?.fullname }</Text>
+            <TouchableOpacity onPress={()=>navigation.navigate('ProfileScreen')} >
+              <Image source={Avatar2} style={styles.userImg} />
+            </TouchableOpacity>
+          </View>
       </>
       }
       {currentBooking &&
@@ -319,34 +298,55 @@ export default function HomeScreenDriver({navigation}) {
       </>
       }
       {requests && 
-        <View style={styles.bottom}>
-            <TouchableOpacity style={styles.searchButton} onPress={()=> acceptRequest(requests[0])}>
-              <Text style={styles.searchText}> 
-                Accept Request   {user?.fullname }
-              </Text>
-            </TouchableOpacity>
+        <View style={styles.requestModal}>
+            <View style={styles.textContainer}>
+              <Text style={styles.requestText}>New Request</Text>
+            </View>
+            <View style={styles.whiteContainer}>
+              <View style={styles.containerTop}>
+                <Image source={Avatar2} style={styles.userImg} />
+                <Text style={styles.riderText}>{"Rider 1"}</Text>
+              </View>
+              <View style={styles.containerBottom}>
+                <ButtonSecondary 
+                  backIcon={true}
+                  size={"small"}
+                  onPress={()=>setRequests(null)}
+                />
+                <ButtonPrimary 
+                  title={"Accept"}
+                  size={"medium"}
+                  onPress={()=> acceptRequest(requests[0])}
+                />
+              </View>
+            </View>
         </View>
       }
       {currentBooking?.status === ONGOING && currentDestination &&
         <View style={styles.bottom}>
-            <TouchableOpacity style={styles.searchButton} onPress={()=> updateBooking()}>
-              <Text style={styles.searchText}> 
-                {currentDestination?.user?.fullname}
-              </Text>
-              <Text style={styles.searchText}> 
-                {currentDestination?.trip?.isPickup && "ARRIVE"}
-                {currentDestination?.trip?.isDropoff && "DROP"}
-              </Text>
-            </TouchableOpacity>
+          {currentDestination?.trip?.isPickup && 
+            <ButtonPrimary 
+              title={"ARRIVE"}
+              size={"large"}
+              onPress={()=> updateBooking()}
+            />
+          }
+          {currentDestination?.trip?.isDropoff && 
+            <ButtonPrimary 
+              title={"DROP"}
+              size={"large"}
+              onPress={()=> updateBooking()}
+            />
+          }
         </View>
       }
       {completedBooking &&
         <View style={styles.bottom}>
-            <TouchableOpacity style={styles.searchButton} onPress={()=> completeBooking()}>
-              <Text style={styles.searchText}> 
-                Finish Request
-              </Text>
-            </TouchableOpacity>
+            <ButtonPrimary 
+              title={"Finish Request"}
+              size={"large"}
+              onPress={()=> completeBooking()}
+            />
         </View>
       }
     </View>

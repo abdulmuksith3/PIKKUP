@@ -17,9 +17,8 @@ import {
   Poppins_700Bold,
   Poppins_800ExtraBold,
 } from '@expo-google-fonts/poppins';
-LogBox.ignoreLogs([
-  'Require cycle:',
-]);
+// LogBox.ignoreLogs();
+LogBox.ignoreAllLogs()
 export const UserContext = createContext();
 
 export default function App() {
@@ -65,7 +64,7 @@ export default function App() {
             :
             <AuthContainer/>
           }
-          <FlashMessage position="top" />
+          <FlashMessage position="bottom" />
         </UserContext.Provider>
     );
     // }

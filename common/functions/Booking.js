@@ -128,8 +128,8 @@ export const acceptRequest = async (request) => {
             riderId: riderId,
             driverId: driverId
         });
-        db.ref(`users/${riderId}/bookingHistory/${key}`).set({id:key, riderId, driverId});
-        db.ref(`users/${driverId}/bookingHistory/${key}`).set({id:key, riderId, driverId});
+        db.ref(`users/${riderId}/bookingHistory/${key}`).set({id:key, riderId, driverId, requestId: id });
+        db.ref(`users/${driverId}/bookingHistory/${key}`).set({id:key, riderId, driverId, requestId: id});
         await db.ref(`bookingRequest/${id}`).once('value', async (snapshot) => {
             let data = snapshot.val()
             data.status = ACCEPTED;
@@ -196,4 +196,20 @@ export const finishBooking = (request) => {
             body: error.message,
         })     
     }
+}
+
+export const getBookingHistory = async (data) => {
+    const history = Object.keys(data).map((i) => {
+        data[i].id = i
+        return data[i]
+    })
+    let historyList = []
+    history?.forEach(async (item) => {
+        const snapshot = await db.ref(`bookings/${item.id}/bookingRequest/${item.requestId}`).once('value');
+        if(snapshot.val()){
+            historyList.push(snapshot.val())
+        } 
+    });
+
+    return historyList;
 } 
