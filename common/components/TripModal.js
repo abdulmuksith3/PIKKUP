@@ -136,6 +136,7 @@ export default function TripModal(props) {
               price={price} setPrice={setPrice}
               from={from} setFrom={setFrom}
               to={to} setTo={setTo}
+              modalVisible={modalVisible} setModalVisible={setModalVisible}
             />
           }
         </View>

@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height:50,
     width: 150,
-    borderRadius: 5,
+    borderRadius: 10,
     shadowColor: color.BLUE_PRIMARY,
     shadowOffset: {
       width: 0,
@@ -52,8 +52,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height:50,
-    width: "50%",
-    borderRadius: 5,
+    width: "80%",
+    borderRadius: 10,
     shadowColor: color.BLUE_PRIMARY,
     shadowOffset: {
       width: 0,
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height:50,
     width: "100%",
-    borderRadius: 5,
+    borderRadius: 10,
     shadowColor: color.BLUE_PRIMARY,
     shadowOffset: {
       width: 0,

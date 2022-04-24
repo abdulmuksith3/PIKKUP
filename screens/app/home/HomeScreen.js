@@ -17,6 +17,7 @@ import firebase from 'firebase';
 import { getUser } from '../../../common/functions/Authentication';
 import { COMPLETED, NEW, PAID } from '../../../common/constants/BookingStatus';
 import { Icon } from 'react-native-elements';
+import { CAR_TYPES } from '../../../common/constants/Cars';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -48,12 +49,12 @@ export default function HomeScreen({navigation}) {
   const [pickup, setPickup] = useState(false);
   const [dropoff, setDropoff] = useState(false);
 
-  const [carType, setCarType] = useState(0);
+  const [carType, setCarType] = useState(CAR_TYPES[0]);
   const [distance, setDistance] = useState(null);
   const [duration, setDuration] = useState(0);
   const [price, setPrice] = useState(0);
   
-  const [selectedPayment, setSelectedPayment] = useState(0);
+  const [selectedPayment, setSelectedPayment] = useState("COD");
   const [promo, setPromo] = useState(null);
 
   const [driver, setDriver] = useState(null);
@@ -120,19 +121,19 @@ export default function HomeScreen({navigation}) {
       setFrom(pickup)
       setTo(dropoff)
       setPrice(finalPrice)
-      setSelectedPayment(paymentMethod)
+      setSelectedPayment("COD")
       setSeats(seats)
       setPromo(discount)
       setCurrentState(4)
       setDriver(driverId)
       setModalVisible(true)
     } else {
-      setCarType(null)
+      setCarType(CAR_TYPES[0])
       setFrom(location?.coords)
       setTo(null)
       setPrice(null)
-      setSelectedPayment(null)
-      setSeats(null)
+      setSelectedPayment("COD")
+      setSeats(1)
       setPromo(null)
       setCurrentState(1)
       setDriver(null)
